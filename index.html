@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taller three.js / SYSMANA 2016</title>
+    <style type="text/css">
+      html, body { margin: 0; padding: 0; overflow: hidden; }
+    </style>
+  </head>
+
+  <body>
+    <!-- LIBRERÍAS -->
+    <script src="js/three.min.js"></script>
+    <script src="js/OrbitControls.js"></script>
+    <script>
+      
+      // Variables que contendrán los elementos básicos del escenario 3D y los modelos
+      var scene, camera, renderer, controls, clock;
+      var earth, skyBg, moon; 
+
+      init(); // En init instanciaremos los elementos del escenario
+      animate(); // En animate escribiremos las instrucciones encargadas del comportamiento en tiempo real
+      
+      function init() {
+ 
+        // Nuevo RENDERIZADOR WebGL - Con antialiasing, y especificando el tamaño de la ventana del navegador
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+      
+        // Nueva CÁMARA en perspectiva - Especificamos FOV de 60º, la relación de aspecto de la ventana del navegador y los planos de corte
+        camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 100000 );
+        camera.position.set(0, 150, 400); //Establecemos una posición inicial que nos servirá de ajuste para los controles básicos
+        
+        // Controles básicos (REQUIERE OrbitControls.js!!!!) - Bloqueamos el uso del teclado en este caso, es opcional
+        controls = new THREE.OrbitControls(camera,renderer.domElement);
+        controls.noKeys = true;
+        
+        clock = new THREE.Clock(); //Instanciamos un nuevo relojs de three.js, nos servirá para la órbita de la Luna
+        
+        scene = new THREE.Scene(); //Instanciamos una nueva ESCENA
+
+        // Instanciamos los objetos de las texturas, y cargamos en ellas las imágenes que vamos a utilizar para texturizar los modelos
+        var earthMap = THREE.ImageUtils.loadTexture( "img/earth.jpg" );
+        var moonMap = THREE.ImageUtils.loadTexture( "img/moon.jpg" );
+        var bgMap = THREE.ImageUtils.loadTexture( "img/bg.jpg" );
+ 
+        // Instanciamos los materiales de tipo BÁSICO (ya que no vamos a utilizar efectos de iluminación en esta demo), y les aplicamos las correspondientes texturas con la propiedad "map"
+        var earthMaterial  = new THREE.MeshBasicMaterial( { map: earthMap } );
+        var bgMaterial  = new THREE.MeshBasicMaterial( { map: bgMap } );
+        var moonMaterial  = new THREE.MeshBasicMaterial( { map: moonMap } );
+        
+        // Instanciamos las correspondientes Geometrías, en este caso esféricas ( radio, polígonos por ancho, polígonos por alto )
+        var earthGeometry = new THREE.SphereGeometry( 60, 60, 40 );
+        var bgGeometry = new THREE.SphereGeometry( 30000, 60, 40 );
+        var moonGeometry = new THREE.SphereGeometry( 16, 60, 40 );
+        
+        // Instanciamos los nuevos modelos, cada uno con la geometría y material correspondiente
+        earth = new THREE.Mesh( earthGeometry, earthMaterial );
+        moon = new THREE.Mesh( moonGeometry, moonMaterial );
+        skyBg = new THREE.Mesh( bgGeometry, bgMaterial );
+        // IMPORTANTE - Establecemos un valor de escalado 1:1 para la esfera del espacio con el primer parámetro en negativo, de esta forma el material con la textura se visualizará en el interior de la esfera grande, creando la sensación de estar inmersos en el espacio.
+        skyBg.scale.set(-1,1,1);
+
+        //wireframe = new THREE.WireframeHelper( earth, 0x00ff00 ); DESCOMENTAR PARA VER LA MALLA DE UN MODELO
+        scene.add( earth ); // Añadimos el modelo de la Tierra al escenario
+        //scene.add( wireframe ); ES NECESARIO AÑADIR LA MALLA A LA ESCENA PARA VISUALIZARLA
+        
+        scene.add( skyBg ); // Añadimos el modelo de la esfera del espacio al escenario
+        scene.add( moon ); // Añadimos el modelo de la Luna al escenario
+
+        document.body.appendChild( renderer.domElement ); // "Acoplamos" el renderizador al árbol DOM del documento HTML. De esta forma el script genera automáticamente dentro del body un elemento de tipo <canvas> con las dimensiones especificadas, y renderizará en su contenido el escenario 3D
+        window.addEventListener( 'resize', onWindowResize, false ); // Hacemos la llamada al escuchador de evento para redimensionar la ventana del navegador, y le pasamos como parámetro la función correspondiente.
+      }
+
+      
+      function animate() {
+        requestAnimationFrame( animate ); // Instrucción necesaria para hacer "programación en tiempo real"
+        earth.rotation.y -= 0.009; // Decrementamos el valor de rotación en el eje Y de la Tierra en cada refresco de pantalla, creando la sensación de giro
+        time = clock.getElapsedTime(); // Almacenamos el tiempo transcurrido en una variable por cada refresco de pantalla
+        /* Si interpretamos ese valor en tiempo como si furan ángulos, y calculando el seno y el coseno de dichos ángulos, podemos aplicar un movimiento orbital a un objeto, aplicando seno y coseno en los ejes X y Z (simultáneamente y respectivamente xD) */
+        moon.position.x = Math.cos(time)*180; // Y multiplicamos por un valor considerablemente más grande ya que el resultado de calcular el seno o el coseno es ínfimo, por lo que de otro modo no tendríamos sensación de movimiento.
+        moon.position.z = Math.sin(time)*180;
+        renderer.render( scene, camera ); // Instrucción recomendablde de añadir para hacer "programación en tiempo real"
+      }
+     
+      function onWindowResize() { //Llamamos a esta función cada vez que el usuario redimensiona la pantalla, ajustando el tamaño del renderizador y la cámara
+        camera.aspect = window.innerWidth / window.innerHeight; //Modificamos uno de los parámetros iniciales de la cámara, la relación de aspecto, al valor del cociente ancho/alto que tengamos en cada momento que el tamaño de la ventana cambia
+        camera.updateProjectionMatrix(); // Actualizamos los valores de la matriz de proyección de la cámara, se trata de un vector de cuatro dimensiones que el renderizador necesita para realizar cálculos complejos.
+        renderer.setSize( window.innerWidth, window.innerHeight ); //Modificamos los valores de dimensión del renderizador cada vez que el usuario modifica el tamaño de la ventana
+      }
+
+    </script>
+  </body>
+</html>
