@@ -41,9 +41,15 @@
         scene = new THREE.Scene(); //Instanciamos una nueva ESCENA
 
         // Instanciamos los objetos de las texturas, y cargamos en ellas las imágenes que vamos a utilizar para texturizar los modelos
-        var earthMap = THREE.ImageUtils.loadTexture( "img/earth.jpg" );
-        var moonMap = THREE.ImageUtils.loadTexture( "img/moon.jpg" );
-        var bgMap = THREE.ImageUtils.loadTexture( "img/bg.jpg" );
+          
+        var earthMap  = new THREE.Texture();
+        var moonMap  = new THREE.Texture(); 
+        var bgMap  = new THREE.Texture(); 
+        var textureLoader = new THREE.ImageLoader();
+
+        textureLoader.load( 'img/earth.jpg', function ( image ) { earthMap.image = image; earthMap.needsUpdate = true; });
+        textureLoader.load( 'img/moon.jpg', function ( image ) { moonMap.image = image; moonMap.needsUpdate = true; });
+        textureLoader.load( 'img/bg.jpg', function ( image ) { bgMap.image = image; bgMap.needsUpdate = true; });
  
         // Instanciamos los materiales de tipo BÁSICO (ya que no vamos a utilizar efectos de iluminación en esta demo), y les aplicamos las correspondientes texturas con la propiedad "map"
         var earthMaterial  = new THREE.MeshBasicMaterial( { map: earthMap } );
